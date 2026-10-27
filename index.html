@@ -1,0 +1,476 @@
+<title>Tu veux un date ?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600;700&display=swap">
+<style>
+/* Layout : une seule question en très grand, alignée à gauche, les deux boutons dessous.
+   Le bouton Non se déplace dans toute la fenêtre quand le pointeur s'approche. */
+:root {
+  --bg: #fff1f4;
+  --fg: #2a1019;
+  --muted: #7a4a5a;
+  --accent: #d6204c;
+  --accent-fg: #ffffff;
+  --soft: #ffdce5;
+  --line: #eeaebd;
+  --font-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d0d15;
+    --fg: #ffe9ef;
+    --muted: #c79aa9;
+    --accent: #ff5c82;
+    --accent-fg: #2a0a14;
+    --soft: #3a1624;
+    --line: #6a3347;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d0d15;
+  --fg: #ffe9ef;
+  --muted: #c79aa9;
+  --accent: #ff5c82;
+  --accent-fg: #2a0a14;
+  --soft: #3a1624;
+  --line: #6a3347;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  display: grid;
+  align-items: center;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+}
+main { width: 100%; max-width: 56rem; margin-inline: auto; min-width: 0; }
+
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+h1 { font-size: clamp(2.8rem, 12vw, 7rem); max-width: 12ch; }
+h1 .q, h2 .accent { color: var(--accent); }
+h2 { font-size: clamp(2.6rem, 11vw, 6rem); outline: none; }
+
+.sub {
+  margin: 1.5rem 0 0;
+  font-size: 1.125rem;
+  color: var(--muted);
+  min-height: 1.7em;
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
+.btn {
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.85em 2em;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.btn:focus-visible, .link:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.btn-yes {
+  background: var(--accent);
+  color: var(--accent-fg);
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+}
+.btn-no {
+  position: relative;
+  z-index: 5;
+  background: var(--soft);
+  color: var(--fg);
+  border-color: var(--line);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  touch-action: manipulation;
+}
+.count {
+  margin: 1.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.done p { margin: 1.5rem 0 0; font-size: 1.25rem; max-width: 30ch; }
+.done .note { margin: 0; font-size: 0.9rem; color: var(--muted); max-width: none; }
+a.btn { display: inline-block; text-decoration: none; text-align: center; }
+.btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+.plan { margin-top: 1.5rem; max-width: 36rem; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.field-wide { grid-column: 1 / -1; }
+.field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.field input {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  background: var(--soft);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 0.7em 0.9em;
+  width: 100%;
+  min-width: 0;
+}
+.field input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.send-row { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.link {
+  font: inherit;
+  margin-top: 2rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Page de confirmation */
+.sent { position: relative; }
+.sent .hand {
+  font-family: "Caveat", "Segoe Script", "Bradley Hand", cursive;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+  line-height: 1;
+}
+.sent h2 { font-size: clamp(2.6rem, 11vw, 5.5rem); }
+.sent .when {
+  display: inline-block;
+  margin: 1.75rem 0 0;
+  padding: 0.9rem 1.4rem;
+  background: var(--soft);
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  font-size: 1.15rem;
+  font-weight: 500;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.sent .when strong { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; display: block; text-transform: capitalize; }
+.sent .lead { margin: 1.5rem 0 0; font-size: 1.25rem; max-width: 30ch; }
+.sent .links { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 2rem; }
+.sent .links .link { margin-top: 0; }
+.big-heart {
+  width: clamp(4.5rem, 16vw, 7rem);
+  height: auto;
+  fill: var(--accent);
+  margin-bottom: 1.25rem;
+  transform-origin: center;
+  animation: beat 1.6s ease-in-out infinite;
+}
+.hearts { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.hearts span {
+  position: absolute;
+  bottom: -2rem;
+  color: var(--accent);
+  opacity: 0;
+  animation: rise linear infinite;
+}
+main { position: relative; z-index: 1; }
+@keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.12); } 30% { transform: scale(1); } 45% { transform: scale(1.08); } 60% { transform: scale(1); } }
+@keyframes rise {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.35; }
+  90% { opacity: 0.25; }
+  100% { transform: translateY(-110vh) translateX(var(--drift, 20px)) rotate(var(--spin, 20deg)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-yes, .btn-no { transition: none; }
+  .big-heart { animation: none; }
+  .hearts { display: none; }
+}
+</style>
+
+<main>
+  <section id="ask">
+    <h1>Tu veux un date&nbsp;<span class="q">?</span></h1>
+    <p class="sub" id="sub">Réponds avec sincérité.</p>
+    <div class="actions">
+      <button type="button" id="yes" class="btn btn-yes">Oui</button>
+      <button type="button" id="no" class="btn btn-no">Non</button>
+    </div>
+    <p class="count" id="count" hidden></p>
+  </section>
+
+  <section id="done" class="done" hidden>
+    <h2 id="done-title" tabindex="-1">Oui&nbsp;<span class="accent">!</span> Bon choix.</h2>
+    <p>Choisis le jour et l'heure, puis envoie.</p>
+
+    <form id="plan" class="plan" autocomplete="off">
+      <div class="fields">
+        <div class="field field-wide">
+          <label for="who">Ton prénom (facultatif)</label>
+          <input id="who" type="text" maxlength="40">
+        </div>
+        <div class="field">
+          <label for="day">Jour</label>
+          <input id="day" type="date">
+        </div>
+        <div class="field">
+          <label for="time">Heure</label>
+          <input id="time" type="time">
+        </div>
+      </div>
+
+      <div class="send-row">
+        <button type="submit" id="send" class="btn btn-yes" aria-disabled="true">Envoyer</button>
+        <span id="hint" class="note">Choisis un jour et une heure.</span>
+      </div>
+
+    </form>
+
+    <button type="button" id="again" class="link">Recommencer</button>
+  </section>
+
+  <section id="sent" class="sent" hidden>
+    <svg class="big-heart" viewBox="0 0 32 29" aria-hidden="true"><path d="M23.6 0c-2.9 0-5.4 1.5-7.6 4.2C13.8 1.5 11.300 0 8.400 0 3.700 0 0 3.800 0 8.600c0 7.500 8.700 12.200 15.200 19.700.4.500 1.200.5 1.600 0C23.300 20.800 32 16.100 32 8.600 32 3.800 28.300 0 23.600 0z"/></svg>
+    <p class="hand">merci d'avoir dit oui</p>
+    <h2 id="sent-title" tabindex="-1">Message envoyé&nbsp;<span class="accent">!</span></h2>
+    <p class="lead">J'ai bien reçu ta réponse. J'ai hâte d'y être.</p>
+    <p class="when" id="when"><strong id="when-day"></strong><span id="when-time"></span></p>
+    <div class="links">
+      <button type="button" id="change" class="link">Changer le jour ou l'heure</button>
+      <button type="button" id="restart" class="link">Revenir au début</button>
+    </div>
+  </section>
+</main>
+<div class="hearts" id="hearts" aria-hidden="true"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var yes = $('yes'), no = $('no'), ask = $('ask'), done = $('done');
+  var sub = $('sub'), count = $('count'), again = $('again'), doneTitle = $('done-title');
+
+  var PAD = 12;      // marge minimale avec le bord de la fenêtre
+  var RADIUS = 120;  // distance à partir de laquelle le bouton Non réagit
+  var tx = 0, ty = 0, n = 0;
+  var base = { l: 0, t: 0, w: 0, h: 0 };
+
+  var lines = [
+    'Réponds avec sincérité.',
+    'Le bouton Non est un peu timide.',
+    'Il court plus vite que toi.',
+    'Essaie encore, ça ne coûte rien.',
+    'Le bouton Oui est juste à côté.',
+    'Tu as le droit d’abandonner.'
+  ];
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function apply() { no.style.transform = 'translate(' + tx + 'px,' + ty + 'px)'; }
+
+  function bounds() {
+    return {
+      minX: PAD - base.l,
+      maxX: window.innerWidth - PAD - base.w - base.l,
+      minY: PAD - base.t,
+      maxY: window.innerHeight - PAD - base.h - base.t
+    };
+  }
+
+  // Position d'origine du bouton (sans décalage), dans la fenêtre.
+  function measure() {
+    if (ask.hidden) return;
+    var tr = no.style.transition;
+    no.style.transition = 'none';
+    no.style.transform = 'none';
+    var r = no.getBoundingClientRect();
+    base = { l: r.left, t: r.top, w: r.width, h: r.height };
+    var b = bounds();
+    tx = clamp(tx, b.minX, b.maxX);
+    ty = clamp(ty, b.minY, b.maxY);
+    apply();
+    void no.offsetWidth;
+    no.style.transition = tr;
+  }
+
+  function update() {
+    count.hidden = n === 0;
+    count.textContent = 'Le bouton Non a esquivé ' + n + ' fois.';
+    sub.textContent = lines[Math.min(Math.floor(n / 2), lines.length - 1)];
+    yes.style.transform = 'scale(' + (1 + Math.min(n, 14) * 0.035).toFixed(3) + ')';
+  }
+
+  function reachDistance() { return RADIUS + Math.max(base.w, base.h) / 2; }
+
+  // Saute à un endroit loin du pointeur.
+  function teleport(px, py) {
+    var b = bounds(), reach = reachDistance(), best = { x: tx, y: ty }, bestD = -1;
+    for (var i = 0; i < 40; i++) {
+      var x = b.minX + Math.random() * Math.max(0, b.maxX - b.minX);
+      var y = b.minY + Math.random() * Math.max(0, b.maxY - b.minY);
+      var d = Math.hypot(base.l + x + base.w / 2 - px, base.t + y + base.h / 2 - py);
+      if (d > bestD) { bestD = d; best = { x: x, y: y }; }
+      if (d > reach * 1.8) break;
+    }
+    tx = best.x; ty = best.y;
+  }
+
+  // Éloigne le bouton si le pointeur est trop près.
+  function dodge(px, py) {
+    var cx = base.l + tx + base.w / 2, cy = base.t + ty + base.h / 2;
+    var dx = cx - px, dy = cy - py, d = Math.hypot(dx, dy);
+    var reach = reachDistance();
+    if (d > reach) return;
+    var b = bounds();
+    var ux = d ? dx / d : 1, uy = d ? dy / d : 0;
+    var push = reach - d + 60;
+    var nx = clamp(tx + ux * push, b.minX, b.maxX);
+    var ny = clamp(ty + uy * push, b.minY, b.maxY);
+    var nd = Math.hypot(base.l + nx + base.w / 2 - px, base.t + ny + base.h / 2 - py);
+    if (nd < reach) { teleport(px, py); } else { tx = nx; ty = ny; }
+    n++; apply(); update();
+  }
+
+  // Pour le clavier et les clics qui arrivent quand même sur le bouton.
+  function jump() {
+    teleport(base.l + tx + base.w / 2, base.t + ty + base.h / 2);
+    n++; apply(); update();
+  }
+
+  function onPointer(e) {
+    if (!done.hidden) return;
+    dodge(e.clientX, e.clientY);
+  }
+  document.addEventListener('pointermove', onPointer);
+  document.addEventListener('pointerdown', onPointer);
+
+  no.addEventListener('click', function (e) { e.preventDefault(); jump(); });
+  no.addEventListener('focus', function () {
+    var visible = false;
+    try { visible = no.matches(':focus-visible'); } catch (err) {}
+    if (visible) jump();
+  });
+
+  yes.addEventListener('click', function () {
+    ask.hidden = true;
+    done.hidden = false;
+    doneTitle.focus();
+  });
+
+  again.addEventListener('click', function () {
+    tx = 0; ty = 0; n = 0;
+    plan.reset(); refresh();
+    done.hidden = true;
+    ask.hidden = false;
+    measure();
+    update();
+    yes.focus();
+  });
+
+  // ====== ADRESSE_EMAIL : remplace par l'adresse qui doit recevoir la réponse ======
+  var ADRESSE_EMAIL = 'cleoevann@gmail.com';
+
+  var plan = $('plan'), who = $('who'), day = $('day'), time = $('time');
+  var send = $('send'), hint = $('hint');
+
+  // Le jour choisi ne peut pas être dans le passé.
+  (function () {
+    var d = new Date();
+    var p = function (v) { return (v < 10 ? '0' : '') + v; };
+    day.min = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  })();
+
+  function frDay(value) {
+    var a = value.split('-');
+    var d = new Date(+a[0], +a[1] - 1, +a[2]);
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function frTime(value) { return value.replace(':', ' h '); }
+
+  function buildMessage() {
+    var name = who.value.trim();
+    var text = 'Salut ! J’ai dit oui. Rendez-vous le ' + frDay(day.value) + ' à ' + frTime(time.value) + '.';
+    return name ? text + '\n\n' + name : text;
+  }
+
+  function refresh() {
+    var ready = !!(day.value && time.value);
+    send.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    hint.textContent = ready ? '' : 'Choisis un jour et une heure.';
+  }
+
+  plan.addEventListener('input', refresh);
+  plan.addEventListener('change', refresh);
+
+  function showSent() {
+    $('when-day').textContent = frDay(day.value);
+    $('when-time').textContent = 'à ' + frTime(time.value);
+    done.hidden = true;
+    sent.hidden = false;
+    launchHearts();
+    window.scrollTo(0, 0);
+    sentTitle.focus();
+  }
+
+  // Envoi direct par FormSubmit : aucune application mail ne s'ouvre.
+  plan.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!day.value || !time.value) {
+      hint.textContent = 'Choisis d’abord un jour et une heure.';
+      return;
+    }
+    // Aucun envoi pour le moment : on affiche seulement la page de confirmation.
+    showSent();
+  });
+
+  var sent = $('sent'), sentTitle = $('sent-title'), heartsBox = $('hearts');
+
+  function launchHearts() {
+    if (heartsBox.childNodes.length) return;
+    for (var i = 0; i < 16; i++) {
+      var h = document.createElement('span');
+      h.textContent = '♥';
+      h.style.left = (Math.random() * 100).toFixed(1) + '%';
+      h.style.fontSize = (14 + Math.random() * 26).toFixed(0) + 'px';
+      h.style.animationDuration = (9 + Math.random() * 9).toFixed(1) + 's';
+      h.style.animationDelay = (-Math.random() * 14).toFixed(1) + 's';
+      h.style.setProperty('--drift', ((Math.random() - 0.5) * 120).toFixed(0) + 'px');
+      h.style.setProperty('--spin', ((Math.random() - 0.5) * 60).toFixed(0) + 'deg');
+      heartsBox.appendChild(h);
+    }
+  }
+
+  $('change').addEventListener('click', function () {
+    sent.hidden = true;
+    done.hidden = false;
+    day.focus();
+  });
+  $('restart').addEventListener('click', function () { sent.hidden = true; again.click(); });
+
+  window.addEventListener('resize', measure);
+  window.addEventListener('scroll', measure, { passive: true });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+  update();
+  measure();
+})();
+</script>
